@@ -1,11 +1,10 @@
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Packages = ReplicatedStorage:WaitForChild("Packages")
 
 local Knit = require(Packages.Knit)
 
-Knit.AddControllers(Players.LocalPlayer.PlayerScripts)
+Knit.AddControllers(script.Parent:WaitForChild('Controllers'))
 
 print("[Client] Starting Knit...")
 Knit.Start():andThen(function()
