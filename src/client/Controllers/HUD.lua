@@ -28,11 +28,16 @@ function HUD:KnitStart()
         ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets,
         IgnoreGuiInset = true
     }, {
-        Thumbstick = Roact.createElement(Thumbstick, {
+        MovementStick = Roact.createElement(Thumbstick, {
             AnchorPoint = Vector2.yAxis,
             Size = UDim2.fromScale(0.3, 0.3),
             Position = UDim2.fromScale(0.05 ,0.9)
-        })
+        }),
+        ShootingStick = Roact.createElement(Thumbstick, {
+            AnchorPoint = Vector2.one,
+            Size = UDim2.fromScale(0.3, 0.3),
+            Position = UDim2.fromScale(0.95 ,0.9)
+        }),
     })
 
     Roact.mount(tree, Players.LocalPlayer.PlayerGui)
