@@ -2,12 +2,16 @@
 local Players = game:GetService('Players')
 local replicatedStorage = game:GetService('ReplicatedStorage')
 
+local localPlayer = Players.LocalPlayer
+
 --> Packages
 local Packages = replicatedStorage.Packages
 local Knit = require(Packages:WaitForChild('Knit'))
 local Nature2D = require(Packages:WaitForChild('Nature2D'))
 
+--> 2D canvas
 local GameUI = Instance.new('ScreenGui')
+GameUI.Name = 'Main'
 GameUI.Enabled = true
 GameUI.ScreenInsets = Enum.ScreenInsets.None
 GameUI.IgnoreGuiInset = true
@@ -29,13 +33,13 @@ Game.Engine = nil
 
 --> Fires when Knit is about to initialize
 function Game:KnitInit()
-    GameUI.Parent = Players.LocalPlayer.PlayerGui
-    Game.Engine = Nature2D.init(GameUI)
+    
 end
 
 --> Fires after Knit controllers are initialized
 function Game:KnitStart()
-    
+    GameUI.Parent = localPlayer.PlayerGui
+    Game.Engine = Nature2D.init(GameUI)
 end
 
 return Game
