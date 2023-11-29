@@ -3,6 +3,13 @@
   "tree": {
     "$className": "DataModel",
 
+    "Players":{
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+
     "ReplicatedStorage": {
       "$path": "src/shared",
       "$className": "ReplicatedStorage",
@@ -17,6 +24,16 @@
     },
 
     "StarterPlayer": {
+      "$properties": {
+        "LoadCharacterAppearance": false,
+        "UserEmotesEnabled": false,
+        "CharacterJumpPower": 50,
+
+        "DevComputerMovementMode": "Scriptable",
+        "DevTouchMovementMode": "Scriptable",
+
+        "EnableMouseLockOption": false
+      },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$path": "src/client"
