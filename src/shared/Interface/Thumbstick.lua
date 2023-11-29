@@ -1,6 +1,5 @@
 --> Services
 local Packages = game:GetService('ReplicatedStorage').Packages
-local UserInputService = game:GetService('UserInputService')
 
 --> Packages
 local Roact = require(Packages.Roact)
@@ -8,6 +7,7 @@ local Trove = require(Packages.Trove)
 local TableUtil = require(Packages.TableUtil)
 
 --> Constants
+local STICK_HITBOX_SCALE = 8
 local WHITE = Color3.new(1, 1, 1)
 local BLACK = Color3.new(0, 0, 0)
 
@@ -30,6 +30,27 @@ local DEFAULTS = {
 --> Component
 local Thumbstick = Roact.Component:extend('Thumbstick')
 
+--> Private Function
+local function calculatePos(input: InputObject, self: Thumbstick)
+    local thumbstickFrame: Frame = self.frameRef:getValue()
+    local stick: Frame = thumbstickFrame.Stick
+
+    local centerPos = thumbstickFrame.AbsolutePosition + thumbstickFrame.AbsoluteSize / 2
+    local currentPos = Vector2.new(input.Position.X, input.Position.Y)
+
+    local diff = currentPos - centerPos
+    local length = diff.Magnitude
+
+    local maxLength = thumbstickFrame.AbsoluteSize.X / 2
+    
+    length = math.min(length, maxLength)
+    diff = diff.Unit * length
+
+    stick.Position = UDim2.new(
+        0.5, diff.X, 0.5, diff.Y
+    )
+end
+
 function Thumbstick:init()
     self.props = TableUtil.Reconcile(self.props, DEFAULTS)
     self.__Trove = Trove.new()
@@ -43,6 +64,13 @@ function Thumbstick:render()
         AnchorPoint = self.props.AnchorPoint,
         Size = self.props.Size,
         Position = self.props.Position,
+
+        [Roact.Event.InputBegan] = function(thumbstickFrame, input: InputObject)
+            if not (ACCEPTED_INPUT[input.UserInputType] and not self.hold) then return end
+            calculatePos(input, self)
+            thumbstickFrame:SetAttribute('IsInteracting', true)
+            self.hold = true
+        end,
 
         [Roact.Ref] = self.frameRef
     }, {
@@ -80,49 +108,61 @@ function Thumbstick:render()
             }),
             Corner = Roact.createElement('UICorner', {
                 CornerRadius = UDim.new(1)
+            }),
+            Hitbox = Roact.createElement('Frame', {
+                AnchorPoint = Vector2.one * 0.5,
+                BackgroundTransparency = 0.5,
+
+                Size = UDim2.fromScale(STICK_HITBOX_SCALE, STICK_HITBOX_SCALE),
+                Position = UDim2.fromScale(0.5, 0.5),
+
+                [Roact.Event.InputChanged] = function(_, input: InputObject)
+                    if not (ACCEPTED_MOVEMENT[input.UserInputType] and self.hold) then return end
+                    calculatePos(input, self)
+                end,
+
+                [Roact.Event.InputEnded] = function(hb, input: InputObject)
+                    if ACCEPTED_INPUT[input.UserInputType] and self.hold then
+                        hb.Parent.Position = UDim2.fromScale(0.5, 0.5)
+                        hb.Parent.Parent:SetAttribute('IsInteracting', false)
+                        self.hold = false
+                    end
+                end
             })
         }),
+        Label = Roact.createElement('TextLabel', {
+            AnchorPoint = Vector2.yAxis,
+            BackgroundTransparency = 1,
+
+            Text = '0, 0',
+            TextColor3 = WHITE,
+
+            Size = UDim2.fromScale(1, 0.2)
+        })
     })
 end
 
 function Thumbstick:didMount()
     local thumbstickFrame: Frame = self.frameRef:getValue()
     local stick: Frame = thumbstickFrame.Stick
-    self.__Trove:Connect(thumbstickFrame.InputBegan, function(input: InputObject)
-        if ACCEPTED_INPUT[input.UserInputType] and not self.hold then
-            local centerPos = thumbstickFrame.AbsolutePosition + thumbstickFrame.AbsoluteSize / 2
-            local x, y = input.Position.X, input.Position.Y
-            stick.Position = UDim2.new(
-                0.5, (x - (centerPos.X)), 0.5, (y - (centerPos.Y))
-            )
 
-            self.lastPos = Vector2.new(x, y)
-            self.hold = true
-        end
+    self.__Trove:Connect(stick:GetPropertyChangedSignal('AbsolutePosition'), function()
+        local thumbstickPos = thumbstickFrame.AbsolutePosition
+        local stickPos = stick.AbsolutePosition
+        local stickSize = stick.AbsoluteSize / 2
+    
+        local direction = -((thumbstickPos - stickPos) + stickSize)
+        thumbstickFrame:SetAttribute('MoveDirection', Vector2.new(
+            math.round(direction.X), math.round(direction.Y)
+        ))
     end)
-    self.__Trove:Connect(UserInputService.InputChanged, function(input: InputObject)
-        if ACCEPTED_MOVEMENT[input.UserInputType] and self.hold then
-            local currentPos = Vector2.new(input.Position.X, input.Position.Y)
 
-            local diff = currentPos - self.lastPos
-            local length = diff.Magnitude
-
-            local maxLength = thumbstickFrame.AbsoluteSize.X / 2
-            
-            length = math.min(length, maxLength)
-            diff = diff.Unit * length
-
-            stick.Position = UDim2.new(
-                0.5, diff.X, 0.5, diff.Y
-            )
-        end
+    self.__Trove:Connect(thumbstickFrame:GetAttributeChangedSignal('MoveDirection'), function()
+        local dir = thumbstickFrame:GetAttribute('MoveDirection')
+        thumbstickFrame.Label.Text = `{dir.X}, {dir.Y}`
     end)
-    self.__Trove:Connect(UserInputService.InputEnded, function(input: InputObject)
-        if ACCEPTED_INPUT[input.UserInputType] and self.hold then
-            stick.Position = UDim2.fromScale(0.5, 0.5)
-            self.hold = false
-        end
-    end)
+
+    thumbstickFrame:SetAttribute('IsInteracting', false)
 end
 
 function Thumbstick:willUnmount()
