@@ -32,15 +32,14 @@ local function init(self)
             local position = self.UIObject.Position + 
                 UDim2.fromOffset(
                     movementSpeed.X,
-                    movementSpeed.Y
-                    
+                    movementSpeed.Y    
+                )
+            position = UDim2.new(
+                0.5, clamp(position.X.Offset, -halvedCanvasSize.X, halvedCanvasSize.X),
+                0.5, clamp(position.Y.Offset, -halvedCanvasSize.Y, halvedCanvasSize.Y)
             )
-			position = UDim2.new(
-				0.5, clamp(position.X.Offset, -halvedCanvasSize.X, halvedCanvasSize.X),
-				0.5, clamp(position.Y.Offset, -halvedCanvasSize.Y, halvedCanvasSize.Y)
-			)
-			self.UIObject.Position = position
-			
+            self.UIObject.Position = position
+
             HUDController.UI.PositionTracker.Text = ('Absolute: (%d, %d); Relative: (%.2f, %d) (%.2f, %d);'):format(
                 self.UIObject.AbsolutePosition.X, self.UIObject.AbsolutePosition.Y,
                 self.UIObject.Position.X.Scale, self.UIObject.Position.X.Offset,
