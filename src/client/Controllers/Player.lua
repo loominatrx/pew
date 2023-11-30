@@ -25,21 +25,7 @@ local function init(self)
         local isInteracting = HUDController.UI.MovementThumbstick:GetAttribute('IsInteracting')
 
         if isInteracting then
-            local halvedCanvasSize = Game.Canvas.AbsoluteSize / 2
-            local direction = HUDController.UI.MovementThumbstick:GetAttribute('MoveDirection')
-            local movementSpeed = direction * 5
-
-            local position = self.UIObject.Position + 
-                UDim2.fromOffset(
-                    movementSpeed.X,
-                    movementSpeed.Y    
-                )
-            position = UDim2.new(
-                0.5, clamp(position.X.Offset, -halvedCanvasSize.X, halvedCanvasSize.X),
-                0.5, clamp(position.Y.Offset, -halvedCanvasSize.Y, halvedCanvasSize.Y)
-            )
-            self.UIObject.Position = position
-
+            self:Move(HUDController.UI.MovementThumbstick:GetAttribute('MoveDirection'))
             HUDController.UI.PositionTracker.Text = ('Absolute: (%d, %d); Relative: (%.2f, %d) (%.2f, %d);'):format(
                 self.UIObject.AbsolutePosition.X, self.UIObject.AbsolutePosition.Y,
                 self.UIObject.Position.X.Scale, self.UIObject.Position.X.Offset,
@@ -47,6 +33,7 @@ local function init(self)
             )
         end
     end)
+
     self.__Trove:Connect(self.UIObject.CollidersTouched.Event, function(hits)
         local enemy = hits[1]
         print(enemy.Name, 'get hit by player')
@@ -54,9 +41,33 @@ local function init(self)
     end)
 end
 
-function Player:Move(vector2: Vector2)
-    local pos = self.UIObject.AbsolutePosition + vector2
-    return self.N2DObject:SetPosition(pos.X, pos.Y)
+function Player:Move(moveDirection: Vector2)
+    local halvedCanvasSize = Game.Canvas.AbsoluteSize / 2
+    local direction = moveDirection
+    local movementSpeed = direction * 5
+
+    local oldPosition = self.UIObject.Position
+    local newPosition = oldPosition + 
+        UDim2.fromOffset(
+            movementSpeed.X,
+            movementSpeed.Y    
+        )
+    newPosition = UDim2.new(
+        0.5, clamp(newPosition.X.Offset, -halvedCanvasSize.X, halvedCanvasSize.X),
+        0.5, clamp(newPosition.Y.Offset, -halvedCanvasSize.Y, halvedCanvasSize.Y)
+    )
+    self.UIObject.Position = newPosition
+    return newPosition, oldPosition
+end
+
+function Player:Destroy()
+    Game.Collision:removeHitter(self.hitterData.index)
+    self.__Trove:Destroy()
+    self.UIObject:Destroy()
+
+    self.UIObject = nil
+    self.__Trove = nil
+    self.hitterData = nil
 end
 
 --> Knit Controller
