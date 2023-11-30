@@ -1,3 +1,6 @@
+--> Wrapper
+local floor = math.floor
+
 --> Services
 local Packages = game:GetService('ReplicatedStorage').Packages
 
@@ -31,6 +34,10 @@ local DEFAULTS = {
 local Thumbstick = Roact.Component:extend('Thumbstick')
 
 --> Private Function
+local function vector2Floor(vector2): Vector2
+    return Vector2.new(floor(vector2.X),floor(vector2.Y))
+end
+
 local function calculatePos(input: InputObject, self: Thumbstick)
     local thumbstickFrame: Frame = self.frameRef:getValue()
     local stick: Frame = thumbstickFrame.Stick
@@ -41,7 +48,7 @@ local function calculatePos(input: InputObject, self: Thumbstick)
     local diff = currentPos - centerPos
     local length = diff.Magnitude
 
-    local maxLength = thumbstickFrame.AbsoluteSize.X / 2
+    local maxLength = floor(thumbstickFrame.AbsoluteSize.X / 2)
     
     length = math.min(length, maxLength)
     diff = diff.Unit * length
@@ -111,7 +118,7 @@ function Thumbstick:render()
             }),
             Hitbox = Roact.createElement('Frame', {
                 AnchorPoint = Vector2.one * 0.5,
-                BackgroundTransparency = 0.5,
+                BackgroundTransparency = 1,
 
                 Size = UDim2.fromScale(STICK_HITBOX_SCALE, STICK_HITBOX_SCALE),
                 Position = UDim2.fromScale(0.5, 0.5),
@@ -147,14 +154,15 @@ function Thumbstick:didMount()
     local stick: Frame = thumbstickFrame.Stick
 
     self.__Trove:Connect(stick:GetPropertyChangedSignal('AbsolutePosition'), function()
-        local thumbstickPos = thumbstickFrame.AbsolutePosition
-        local stickPos = stick.AbsolutePosition
-        local stickSize = stick.AbsoluteSize / 2
+        local thumbstickPos = vector2Floor(thumbstickFrame.AbsolutePosition)
+        local stickPos = vector2Floor(stick.AbsolutePosition)
+        local stickSize = vector2Floor(stick.AbsoluteSize)
     
-        local direction = -((thumbstickPos - stickPos) + stickSize)
-        thumbstickFrame:SetAttribute('MoveDirection', Vector2.new(
-            math.round(direction.X), math.round(direction.Y)
-        ))
+        local direction = -((thumbstickPos - stickPos) + (stickSize / 2)) / stick.AbsoluteSize
+        -- thumbstickFrame:SetAttribute('MoveDirection', Vector2.new(
+        --     math.clamp(direction.X, -1, 1), math.clamp(direction.Y, -1, 1)
+        -- ))
+        thumbstickFrame:SetAttribute('MoveDirection', direction)
     end)
 
     self.__Trove:Connect(thumbstickFrame:GetAttributeChangedSignal('MoveDirection'), function()
