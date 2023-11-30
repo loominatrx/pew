@@ -46,6 +46,8 @@ Game.Player = nil
 
 function Game:StartGame()
     Game.Player = PlayerController.new()
+    HUDController:SetVisible(true)
+
     for i = 1, 10 do
         local enemy = create('Frame', Game.Canvas, {
             Name = `Enemy {i}`,
@@ -70,11 +72,18 @@ function Game:StartGame()
         })
         Game.Collision:addCollider(enemy, false)
     end
-    HUDController:SetVisible(true)
 end
 
 function Game:StopGame()
+    Game.Player:Destroy()
+    Game.Player = nil
 
+    for index, enemy in Game.Collision:getColliders() do
+        Game.Collision:removeCollider(index)
+        enemy:Destroy()
+    end
+
+    HUDController:SetVisible(false)
 end
 
 --> Fires when Knit is about to initialize
