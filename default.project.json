@@ -14,7 +14,10 @@
       "$path": "src/shared",
       "$className": "ReplicatedStorage",
       "Packages": {
-          "$path": "Packages"
+          "$path": "Packages",
+          "GuiCollisionService":{
+            "$path": "lib/GuiCollisionService/module/GuiCollisionService.lua"
+          }
       }
     },
 
